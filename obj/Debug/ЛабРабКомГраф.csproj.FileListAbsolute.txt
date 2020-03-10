@@ -1,0 +1,10 @@
+C:\Users\Эмиль\Desktop\Проекты\ЛабРабКомГраф\bin\Debug\ЛабРабКомГраф.exe.config
+C:\Users\Эмиль\Desktop\Проекты\ЛабРабКомГраф\bin\Debug\ЛабРабКомГраф.exe
+C:\Users\Эмиль\Desktop\Проекты\ЛабРабКомГраф\bin\Debug\ЛабРабКомГраф.pdb
+C:\Users\Эмиль\Desktop\Проекты\ЛабРабКомГраф\obj\Debug\ЛабРабКомГраф.csprojAssemblyReference.cache
+C:\Users\Эмиль\Desktop\Проекты\ЛабРабКомГраф\obj\Debug\ЛабРабКомГраф.Form1.resources
+C:\Users\Эмиль\Desktop\Проекты\ЛабРабКомГраф\obj\Debug\ЛабРабКомГраф.Properties.Resources.resources
+C:\Users\Эмиль\Desktop\Проекты\ЛабРабКомГраф\obj\Debug\ЛабРабКомГраф.csproj.GenerateResource.cache
+C:\Users\Эмиль\Desktop\Проекты\ЛабРабКомГраф\obj\Debug\ЛабРабКомГраф.csproj.CoreCompileInputs.cache
+C:\Users\Эмиль\Desktop\Проекты\ЛабРабКомГраф\obj\Debug\ЛабРабКомГраф.exe
+C:\Users\Эмиль\Desktop\Проекты\ЛабРабКомГраф\obj\Debug\ЛабРабКомГраф.pdb
