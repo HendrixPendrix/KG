@@ -22,7 +22,7 @@ namespace ЛабРабКомГраф
         {
             protected abstract Color calcNewPixelColor(Bitmap im, int x, int y);
 
-            public Bitmap ProcessImage(Bitmap im, BackgroundWorker bw)
+            public virtual Bitmap ProcessImage(Bitmap im, BackgroundWorker bw)
             {
                 Bitmap res = new Bitmap(im.Width, im.Height);
                 for (int i = 0; i < im.Width; i++)
@@ -45,6 +45,11 @@ namespace ЛабРабКомГраф
                 if (val > max)
                     return max;
                 return val;
+            }
+
+            public double Intens(Color color)
+            {
+                return 0.36 * color.R + 0.53 * color.G + 0.11 * color.B;
             }
         }
 
@@ -94,6 +99,8 @@ namespace ЛабРабКомГраф
                 return resColor;
             }
         }
+
+
 
         class MatrixFilter : Filters
         {
@@ -198,6 +205,103 @@ namespace ЛабРабКомГраф
             }
         }
 
+        class DilationFilter : Filters
+        {
+            int width = 3;
+            int height = 3;
+            int[,] m = { { 1, 1, 1 },
+                         { 1, 1, 1 },
+                         { 1, 1, 1 } };
+            public DilationFilter()
+            { }
+            protected override Color calcNewPixelColor(Bitmap im, int x, int y)
+            {
+                Color max = Color.Black;
+                double maxIntens = -100000;
+
+                for (int j = -height / 2; j <= height / 2; j++)
+                    for (int i = -width / 2; i <= width / 2; i++)
+                    {
+                        //обработка краевого случая
+                        int nx = Clamp(x + i, 0, im.Width - 1);
+                        int ny = Clamp(y + j, 0, im.Height - 1);
+
+                        if ((m[width / 2 + i, height / 2 + j] != 0) && (Intens(im.GetPixel(nx, ny)) > maxIntens))
+                        {
+                            max = im.GetPixel(nx, ny);
+                            maxIntens = Intens(max);
+                        }
+                    }
+                return max;
+            }
+        }
+
+        class ErosionFilter : Filters
+        {
+            int width = 3;
+            int height = 3;
+            int[,] m = { { 1, 1, 1 },
+                         { 1, 1, 1 },
+                         { 1, 1, 1 } };
+            protected override Color calcNewPixelColor(Bitmap im, int x, int y)
+            {
+                Color min = Color.Black;
+                double minIntens = 100000;
+
+                for (int j = -height / 2; j <= height / 2; j++)
+                    for (int i = -width / 2; i <= width / 2; i++)
+                    {
+                        //обработка краевого случая
+                        int nx = Clamp(x + i, 0, im.Width - 1);
+                        int ny = Clamp(y + j, 0, im.Height - 1);
+
+                        if ((m[width / 2 + i, height / 2 + j] != 0) && (Intens(im.GetPixel(nx, ny)) < minIntens))
+                        {
+                            min = im.GetPixel(nx, ny);
+                            minIntens = Intens(min);
+                        }
+                    }
+                return min;
+            }
+        }
+
+        class OpeningFilter : Filters
+        {
+            DilationFilter dilfil= new DilationFilter();
+            ErosionFilter erfil = new ErosionFilter();
+            protected override Color calcNewPixelColor(Bitmap im, int x, int y)
+            {
+                if (im == null)
+                    throw new ArgumentNullException(nameof(im));
+                return Color.White;
+            }
+            public override Bitmap ProcessImage(Bitmap im,BackgroundWorker bw)
+            {
+                Bitmap res = erfil.ProcessImage(im, bw);
+                Bitmap final = dilfil.ProcessImage(im, bw);
+                return final;
+            }
+
+        }
+
+        class ClosingFilter:Filters
+        {
+            DilationFilter dilfil = new DilationFilter();
+            ErosionFilter erfil = new ErosionFilter();
+            protected override Color calcNewPixelColor(Bitmap im, int x, int y)
+            {
+                if (im == null)
+                    throw new ArgumentNullException(nameof(im));
+                return Color.White;
+            }
+            public override Bitmap ProcessImage(Bitmap im, BackgroundWorker bw)
+            {
+                Bitmap res = dilfil.ProcessImage(im, bw);
+                Bitmap final = erfil.ProcessImage(im, bw);
+                return final;
+            }
+        }
+
         private void файлToolStripMenuItem_Click(object sender, EventArgs e)
         {
 
@@ -287,6 +391,30 @@ namespace ЛабРабКомГраф
         private void повыситьРезкостьToolStripMenuItem_Click(object sender, EventArgs e)
         {
             Filters filter = new UpSharpnessFilter();
+            backgroundWorker1.RunWorkerAsync(filter);
+        }
+
+        private void наращиваниеToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Filters filter = new DilationFilter();
+            backgroundWorker1.RunWorkerAsync(filter);
+        }
+
+        private void эрозияToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Filters filter = new ErosionFilter();
+            backgroundWorker1.RunWorkerAsync(filter);
+        }
+
+        private void размыканиеToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Filters filter = new OpeningFilter();
+            backgroundWorker1.RunWorkerAsync(filter);
+        }
+
+        private void замыканиеToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Filters filter = new ClosingFilter();
             backgroundWorker1.RunWorkerAsync(filter);
         }
     }
