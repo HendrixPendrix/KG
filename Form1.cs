@@ -100,7 +100,43 @@ namespace ЛабРабКомГраф
             }
         }
 
+        class GrayWorldFilter : Filters
+        {
+            double R;
+            double G;
+            double B;
+            double AvC;
+            int norm;
+            public GrayWorldFilter(Bitmap im)
+            {
+                R = 0;
+                G = 0;
+                B = 0;
+                norm = 0;
+                for (int i = 0; i < im.Width; i++)
+                    for (int j = 0; j < im.Height; j++)
+                    {
+                        Color tmpColor = im.GetPixel(i, j);
+                        R += tmpColor.R;
+                        G += tmpColor.G;
+                        B += tmpColor.B;
+                        norm++;
+                    }
+                R /= norm;
+                G /= norm;
+                B /= norm;
+                AvC = (R + G + B) / 3;
+            }
+            protected override Color calcNewPixelColor(Bitmap im, int x, int y)
+            {
 
+                Color CurColor = im.GetPixel(x, y);
+                return Color.FromArgb(
+                    Clamp((int)(CurColor.R * AvC / R), 0, 255),
+                     Clamp((int)(CurColor.G * AvC / G), 0, 255),
+                      Clamp((int)(CurColor.G * AvC / G), 0, 255));
+            }
+        }
 
         class MatrixFilter : Filters
         {
@@ -212,8 +248,6 @@ namespace ЛабРабКомГраф
             int[,] m = { { 1, 1, 1 },
                          { 1, 1, 1 },
                          { 1, 1, 1 } };
-            public DilationFilter()
-            { }
             protected override Color calcNewPixelColor(Bitmap im, int x, int y)
             {
                 Color max = Color.Black;
@@ -264,10 +298,34 @@ namespace ЛабРабКомГраф
                 return min;
             }
         }
+        //Под вопросом
+        class TopHatFilter : Filters
+        {
+            Bitmap Im;
+            int width = 3;
+            int height = 3;
+            int[,] m = { { 1, 1, 1 },
+                         { 1, 1, 1 },
+                         { 1, 1, 1 } };
+            protected override Color calcNewPixelColor(Bitmap im, int x, int y)
+            {
+                Color color = Im.GetPixel(x, y);
+                if (color.R >= 250 && color.G >= 250 && color.B >= 250)
+                    return Color.Black;
+                return im.GetPixel(x, y);
 
+            }
+            public override Bitmap ProcessImage(Bitmap im, BackgroundWorker bw)
+            {
+                OpeningFilter op = new OpeningFilter();
+                Im = op.ProcessImage(im, bw);
+                return base.ProcessImage(im, bw);
+            }
+        }
+        //
         class OpeningFilter : Filters
         {
-            DilationFilter dilfil= new DilationFilter();
+            DilationFilter dilfil = new DilationFilter();
             ErosionFilter erfil = new ErosionFilter();
             protected override Color calcNewPixelColor(Bitmap im, int x, int y)
             {
@@ -275,7 +333,7 @@ namespace ЛабРабКомГраф
                     throw new ArgumentNullException(nameof(im));
                 return Color.White;
             }
-            public override Bitmap ProcessImage(Bitmap im,BackgroundWorker bw)
+            public override Bitmap ProcessImage(Bitmap im, BackgroundWorker bw)
             {
                 Bitmap res = erfil.ProcessImage(im, bw);
                 Bitmap final = dilfil.ProcessImage(im, bw);
@@ -284,7 +342,7 @@ namespace ЛабРабКомГраф
 
         }
 
-        class ClosingFilter:Filters
+        class ClosingFilter : Filters
         {
             DilationFilter dilfil = new DilationFilter();
             ErosionFilter erfil = new ErosionFilter();
@@ -415,6 +473,18 @@ namespace ЛабРабКомГраф
         private void замыканиеToolStripMenuItem_Click(object sender, EventArgs e)
         {
             Filters filter = new ClosingFilter();
+            backgroundWorker1.RunWorkerAsync(filter);
+        }
+
+        private void серыйМирToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Filters filter = new GrayWorldFilter(image);
+            backgroundWorker1.RunWorkerAsync(filter);
+        }
+
+        private void blackHatToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Filters filter = new TopHatFilter();
             backgroundWorker1.RunWorkerAsync(filter);
         }
     }
