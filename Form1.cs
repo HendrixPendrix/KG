@@ -138,6 +138,47 @@ namespace ЛабРабКомГраф
             }
         }
 
+        class MedianFilter : Filters
+        {
+            protected override Color calcNewPixelColor(Bitmap im, int x, int y)
+            {
+                int rad = 2;
+                if (x < rad || x >= im.Width - 1 - rad || y < rad || y >= im.Height - 1 - rad)
+                    return im.GetPixel(x, y);
+                double[] valCol = new double[(rad * 2 + 1) * (rad * 2 + 1)];
+                Color[] col = new Color[(rad * 2 + 1) * (rad * 2 + 1)];
+
+                for (int i = -rad; i <= rad; i++)
+                    for (int j = -rad; j <= rad; j++)
+                    {
+                        valCol[(i + rad) * (rad * 2 + 1) + j + rad] = Intens(im.GetPixel(x + i, y + j));
+                        col[(i + rad) * (rad * 2 + 1) + j + rad] = im.GetPixel(x + i, y + j);
+                    }
+                bool f = false;
+                for (int i = 0; i < valCol.Length; i++)
+                {
+                    for (int j = 1; j < valCol.Length; j++)
+                    {
+                        if (valCol[j] < valCol[j - 1])
+                        {
+                            double tmp;
+                            Color tmpCol;
+                            tmp = valCol[j];
+                            valCol[j] = valCol[j - 1];
+                            valCol[j - 1] = tmp;
+                            tmpCol = col[j];
+                            col[j] = col[j - 1];
+                            col[j - 1] = tmpCol;
+                            f = true;
+                        }
+                    }
+                    if (f == false)
+                        break;
+                }
+                return col[col.Length / 2];
+            }
+        }
+
         class MatrixFilter : Filters
         {
             protected float[,] ker = null;
@@ -485,6 +526,12 @@ namespace ЛабРабКомГраф
         private void blackHatToolStripMenuItem_Click(object sender, EventArgs e)
         {
             Filters filter = new TopHatFilter();
+            backgroundWorker1.RunWorkerAsync(filter);
+        }
+
+        private void медианыйФильтрToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Filters filter = new MedianFilter();
             backgroundWorker1.RunWorkerAsync(filter);
         }
     }
