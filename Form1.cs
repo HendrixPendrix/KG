@@ -3,10 +3,12 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.IO;
 
 namespace ЛабРабКомГраф
 {
@@ -145,37 +147,24 @@ namespace ЛабРабКомГраф
                 int rad = 2;
                 if (x < rad || x >= im.Width - 1 - rad || y < rad || y >= im.Height - 1 - rad)
                     return im.GetPixel(x, y);
-                double[] valCol = new double[(rad * 2 + 1) * (rad * 2 + 1)];
-                Color[] col = new Color[(rad * 2 + 1) * (rad * 2 + 1)];
-
+                double[] arrR = new double[(rad * 2 + 1) * (rad * 2 + 1)];
+                double[] arrB = new double[(rad * 2 + 1) * (rad * 2 + 1)];
+                double[] arrG = new double[(rad * 2 + 1) * (rad * 2 + 1)];
+                int count = 0;
                 for (int i = -rad; i <= rad; i++)
-                    for (int j = -rad; j <= rad; j++)
+                    for (int j = -rad; j <= rad; j++, count++)
                     {
-                        valCol[(i + rad) * (rad * 2 + 1) + j + rad] = Intens(im.GetPixel(x + i, y + j));
-                        col[(i + rad) * (rad * 2 + 1) + j + rad] = im.GetPixel(x + i, y + j);
+                        int idX = Clamp(x + i, 0, im.Width - 1);
+                        int idY = Clamp(y + j, 0, im.Height - 1);
+                        Color nearColor = im.GetPixel(idX, idY);
+                        arrR[count] = nearColor.R;
+                        arrG[count] = nearColor.G;
+                        arrB[count] = nearColor.B;
                     }
-                bool f = false;
-                for (int i = 0; i < valCol.Length; i++)
-                {
-                    for (int j = 1; j < valCol.Length; j++)
-                    {
-                        if (valCol[j] < valCol[j - 1])
-                        {
-                            double tmp;
-                            Color tmpCol;
-                            tmp = valCol[j];
-                            valCol[j] = valCol[j - 1];
-                            valCol[j - 1] = tmp;
-                            tmpCol = col[j];
-                            col[j] = col[j - 1];
-                            col[j - 1] = tmpCol;
-                            f = true;
-                        }
-                    }
-                    if (f == false)
-                        break;
-                }
-                return col[col.Length / 2];
+                Array.Sort(arrR);
+                Array.Sort(arrG);
+                Array.Sort(arrB);
+                return Color.FromArgb(Clamp((int)arrR[4], 0, 255), Clamp((int)arrG[4], 0, 255), Clamp((int)arrG[4], 0, 255)); ;
             }
         }
 
@@ -246,20 +235,29 @@ namespace ЛабРабКомГраф
 
         class SobelsFilter : MatrixFilter
         {
+            private float[,] kerX = null;
+            private float[,] kerY = null;
             public SobelsFilter()
             {
-                int sizeX = 3;
-                int sizeY = 3;
-                ker = new float[sizeX, sizeY];
-                ker[0, 0] = -1;
-                ker[0, 1] = -2;
-                ker[0, 2] = -1;
-                ker[1, 0] = 0;
-                ker[1, 1] = 0;
-                ker[1, 2] = 0;
-                ker[2, 0] = 1;
-                ker[2, 1] = 2;
-                ker[2, 2] = 1;
+                kerY = new float[3, 3]{ { -1f, -2f, -1f },
+                                                 { 0f, 0f, 0f },
+                                                 { 1f, 2f, 1f } };
+                kerX = new float[3, 3]{ { -1f, 0f, 1f },
+                                                 { -2f, 0f, 2f },
+                                                 { -1f, 0f, 1f } };
+            }
+            protected override Color calcNewPixelColor(Bitmap im, int x, int y)
+            {
+                float R, G, B;
+                ker = kerX;
+                Color gradX = base.calcNewPixelColor(im, x, y);
+                ker = kerY;
+                Color gradY = base.calcNewPixelColor(im, x, y);
+                R = (float)Math.Sqrt(gradX.R * gradX.R + gradY.R * gradY.R);
+                G = (float)Math.Sqrt(gradX.G * gradX.G + gradY.G * gradY.G);
+                B = (float)Math.Sqrt(gradX.B * gradX.B + gradY.B * gradY.B);
+                return Color.FromArgb(Clamp((int)R, 0, 255), Clamp((int)G, 0, 255), Clamp((int)B, 0, 255));
+
             }
         }
 
@@ -286,14 +284,13 @@ namespace ЛабРабКомГраф
         {
             int width = 3;
             int height = 3;
-            int[,] m = { { 1, 1, 1 },
+            int[,] m = { { 0, 1, 0 },
                          { 1, 1, 1 },
-                         { 1, 1, 1 } };
+                         { 0, 1, 0 } };
             protected override Color calcNewPixelColor(Bitmap im, int x, int y)
             {
-                Color max = Color.Black;
-                double maxIntens = -100000;
-
+                Color res = Color.Black;
+                byte max = 0;
                 for (int j = -height / 2; j <= height / 2; j++)
                     for (int i = -width / 2; i <= width / 2; i++)
                     {
@@ -301,13 +298,13 @@ namespace ЛабРабКомГраф
                         int nx = Clamp(x + i, 0, im.Width - 1);
                         int ny = Clamp(y + j, 0, im.Height - 1);
 
-                        if ((m[width / 2 + i, height / 2 + j] != 0) && (Intens(im.GetPixel(nx, ny)) > maxIntens))
+                        if ((m[width / 2 + i, height / 2 + j] != 0) && (Intens(im.GetPixel(nx, ny)) > max))
                         {
-                            max = im.GetPixel(nx, ny);
-                            maxIntens = Intens(max);
+                            max = (byte)Intens(im.GetPixel(nx, ny));
+                            res = im.GetPixel(nx, ny);
                         }
                     }
-                return max;
+                return res;
             }
         }
 
@@ -320,8 +317,8 @@ namespace ЛабРабКомГраф
                          { 1, 1, 1 } };
             protected override Color calcNewPixelColor(Bitmap im, int x, int y)
             {
-                Color min = Color.Black;
-                double minIntens = 100000;
+                Color res = Color.White;
+                byte min = 255;
 
                 for (int j = -height / 2; j <= height / 2; j++)
                     for (int i = -width / 2; i <= width / 2; i++)
@@ -330,40 +327,44 @@ namespace ЛабРабКомГраф
                         int nx = Clamp(x + i, 0, im.Width - 1);
                         int ny = Clamp(y + j, 0, im.Height - 1);
 
-                        if ((m[width / 2 + i, height / 2 + j] != 0) && (Intens(im.GetPixel(nx, ny)) < minIntens))
+                        if ((m[width / 2 + i, height / 2 + j] != 0) && (Intens(im.GetPixel(nx, ny)) < min))
                         {
-                            min = im.GetPixel(nx, ny);
-                            minIntens = Intens(min);
+                            min = (byte)Intens(im.GetPixel(nx, ny));
+                            res = im.GetPixel(nx, ny);
                         }
                     }
-                return min;
+                return res;
             }
         }
-        //Под вопросом
+
         class TopHatFilter : Filters
         {
-            Bitmap Im;
-            int width = 3;
-            int height = 3;
-            int[,] m = { { 1, 1, 1 },
-                         { 1, 1, 1 },
-                         { 1, 1, 1 } };
             protected override Color calcNewPixelColor(Bitmap im, int x, int y)
             {
-                Color color = Im.GetPixel(x, y);
-                if (color.R >= 250 && color.G >= 250 && color.B >= 250)
-                    return Color.Black;
-                return im.GetPixel(x, y);
-
+                throw new NotImplementedException();
             }
             public override Bitmap ProcessImage(Bitmap im, BackgroundWorker bw)
             {
                 OpeningFilter op = new OpeningFilter();
-                Im = op.ProcessImage(im, bw);
-                return base.ProcessImage(im, bw);
+                Substraction sub = new Substraction(op.ProcessImage(im, bw));
+                return sub.ProcessImage(im, bw);
             }
         }
-        //
+
+        class BlackHatFilter : Filters
+        {
+            protected override Color calcNewPixelColor(Bitmap im, int x, int y)
+            {
+                throw new NotImplementedException();
+            }
+            public override Bitmap ProcessImage(Bitmap im, BackgroundWorker bw)
+            {
+                ClosingFilter close = new ClosingFilter();
+                Substraction sub = new Substraction(close.ProcessImage(im, bw));
+                return sub.ProcessImage(im, bw);
+            }
+        }
+
         class OpeningFilter : Filters
         {
             DilationFilter dilfil = new DilationFilter();
@@ -376,9 +377,7 @@ namespace ЛабРабКомГраф
             }
             public override Bitmap ProcessImage(Bitmap im, BackgroundWorker bw)
             {
-                Bitmap res = erfil.ProcessImage(im, bw);
-                Bitmap final = dilfil.ProcessImage(im, bw);
-                return final;
+                return dilfil.ProcessImage(erfil.ProcessImage(im, bw), bw);
             }
 
         }
@@ -395,11 +394,40 @@ namespace ЛабРабКомГраф
             }
             public override Bitmap ProcessImage(Bitmap im, BackgroundWorker bw)
             {
-                Bitmap res = dilfil.ProcessImage(im, bw);
-                Bitmap final = erfil.ProcessImage(im, bw);
-                return final;
+                return erfil.ProcessImage(dilfil.ProcessImage(im, bw), bw);
             }
         }
+
+        class GradFilter:Filters
+        {
+            public override Bitmap ProcessImage(Bitmap im, BackgroundWorker bw)
+            {
+                DilationFilter dilfil = new DilationFilter();
+                ErosionFilter erfil = new ErosionFilter();
+                Substraction sub = new Substraction(dilfil.ProcessImage(im,bw));
+                return sub.ProcessImage(erfil.ProcessImage(im, bw), bw);
+            }
+            protected override Color calcNewPixelColor(Bitmap im, int x, int y)
+            {
+                throw new NotImplementedException();
+            }
+        }
+
+        class Substraction : Filters
+        {
+            Bitmap tmpim = null;
+            public Substraction(Bitmap im)
+            {
+                tmpim = im;
+            }
+            protected override Color calcNewPixelColor(Bitmap im, int x, int y)
+            {
+                Color tmpCol = tmpim.GetPixel(x, y);
+                Color currCol = im.GetPixel(x, y);
+                return Color.FromArgb(Clamp(tmpCol.R - currCol.R, 0, 255), Clamp(tmpCol.G - currCol.G, 0, 255), Clamp(tmpCol.B - currCol.B, 0, 255));
+            }
+        }
+
 
         private void файлToolStripMenuItem_Click(object sender, EventArgs e)
         {
@@ -415,6 +443,29 @@ namespace ЛабРабКомГраф
                 image = new Bitmap(dialog.FileName);
                 pictureBox1.Image = image;
                 pictureBox1.Refresh();
+            }
+        }
+
+        private void сохранитьToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            SaveFileDialog save = new SaveFileDialog();
+            save.Filter="Image files|*.png;*.jpeg;*.jpg;*.bmp*|All files(*.*)|*.*";
+            if(save.FileName!=" ")
+            {
+                FileStream fs = (FileStream)save.OpenFile();
+                switch (save.FilterIndex)
+                {
+                    case 1:
+                        this.сохранитьToolStripMenuItem.Image.Save(fs, ImageFormat.Jpeg);
+                        break;
+                    case 2:
+                        this.сохранитьToolStripMenuItem.Image.Save(fs, ImageFormat.Bmp);
+                        break;
+                    case 3:
+                        this.сохранитьToolStripMenuItem.Image.Save(fs, ImageFormat.Png);
+                        break;
+                }
+                fs.Close();
             }
         }
 
@@ -523,15 +574,34 @@ namespace ЛабРабКомГраф
             backgroundWorker1.RunWorkerAsync(filter);
         }
 
-        private void blackHatToolStripMenuItem_Click(object sender, EventArgs e)
+
+
+        private void медианыйФильтрToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Filters filter = new MedianFilter();
+            backgroundWorker1.RunWorkerAsync(filter);
+        }
+
+        private void pictureBox1_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void topHatToolStripMenuItem_Click(object sender, EventArgs e)
         {
             Filters filter = new TopHatFilter();
             backgroundWorker1.RunWorkerAsync(filter);
         }
 
-        private void медианыйФильтрToolStripMenuItem_Click(object sender, EventArgs e)
+        private void blackHatToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            Filters filter = new MedianFilter();
+            Filters filter = new BlackHatFilter();
+            backgroundWorker1.RunWorkerAsync(filter);
+        }
+
+        private void gradToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Filters filter = new GradFilter();
             backgroundWorker1.RunWorkerAsync(filter);
         }
     }
