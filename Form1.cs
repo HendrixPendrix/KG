@@ -280,6 +280,15 @@ namespace ЛабРабКомГраф
             }
         }
 
+        class MotionBlur : MatrixFilter
+        {
+            public MotionBlur()
+            {
+                ker = new float[,] { { 0.2f, 0, 0, 0, 0 }, { 0, 0.2f, 0, 0, 0}, {0, 0, 0.2f, 0, 0 },
+                { 0, 0, 0, 0.2f, 0}, { 0, 0, 0, 0, 0.2f } };
+            }
+        }
+
         class DilationFilter : Filters
         {
             int width = 3;
@@ -602,6 +611,12 @@ namespace ЛабРабКомГраф
         private void gradToolStripMenuItem_Click(object sender, EventArgs e)
         {
             Filters filter = new GradFilter();
+            backgroundWorker1.RunWorkerAsync(filter);
+        }
+
+        private void motionBlurToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Filters filter = new MotionBlur();
             backgroundWorker1.RunWorkerAsync(filter);
         }
     }
