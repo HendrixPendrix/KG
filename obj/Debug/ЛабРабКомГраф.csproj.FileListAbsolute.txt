@@ -18,3 +18,13 @@ C:\Users\Эмиль\Desktop\KG\obj\Debug\ЛабРабКомГраф.csproj.Gener
 C:\Users\Эмиль\Desktop\KG\obj\Debug\ЛабРабКомГраф.csproj.CoreCompileInputs.cache
 C:\Users\Эмиль\Desktop\KG\obj\Debug\ЛабРабКомГраф.exe
 C:\Users\Эмиль\Desktop\KG\obj\Debug\ЛабРабКомГраф.pdb
+D:\reps-git\KG\bin\Debug\ЛабРабКомГраф.exe.config
+D:\reps-git\KG\bin\Debug\ЛабРабКомГраф.exe
+D:\reps-git\KG\bin\Debug\ЛабРабКомГраф.pdb
+D:\reps-git\KG\obj\Debug\ЛабРабКомГраф.csprojAssemblyReference.cache
+D:\reps-git\KG\obj\Debug\ЛабРабКомГраф.Form1.resources
+D:\reps-git\KG\obj\Debug\ЛабРабКомГраф.Properties.Resources.resources
+D:\reps-git\KG\obj\Debug\ЛабРабКомГраф.csproj.GenerateResource.cache
+D:\reps-git\KG\obj\Debug\ЛабРабКомГраф.csproj.CoreCompileInputs.cache
+D:\reps-git\KG\obj\Debug\ЛабРабКомГраф.exe
+D:\reps-git\KG\obj\Debug\ЛабРабКомГраф.pdb
