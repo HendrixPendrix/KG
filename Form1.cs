@@ -235,8 +235,8 @@ namespace ЛабРабКомГраф
 
         class SobelsFilter : MatrixFilter
         {
-            private float[,] kerX = null;
-            private float[,] kerY = null;
+            protected float[,] kerX = null;
+            protected float[,] kerY = null;
             public SobelsFilter()
             {
                 kerY = new float[3, 3]{ { -1f, -2f, -1f },
@@ -258,6 +258,15 @@ namespace ЛабРабКомГраф
                 B = (float)Math.Sqrt(gradX.B * gradX.B + gradY.B * gradY.B);
                 return Color.FromArgb(Clamp((int)R, 0, 255), Clamp((int)G, 0, 255), Clamp((int)B, 0, 255));
 
+            }
+        }
+
+        class Pruit : SobelsFilter
+        {
+            public Pruit()
+            {
+                kerX = new float[,] { { -1, 0, 1 }, { -1, 0, 1 }, { -1, 0, 1 } };
+                kerY = new float[,] { { -1, -1, -1 }, { 0, 0, 0 }, { 1, 1, 1 } };
             }
         }
 
@@ -314,6 +323,28 @@ namespace ЛабРабКомГраф
                         }
                     }
                 return res;
+            }
+        }
+
+        class Window : Filters
+        {
+
+            private double randomNumber;
+            private Random rand;
+
+            public Window()
+            {
+                rand = new Random();
+            }
+
+            protected override Color calcNewPixelColor(Bitmap sourceImage, int x, int y)
+            {
+
+                randomNumber = rand.NextDouble();
+                int nX = Clamp((int)(x + (randomNumber - 0.5) * 10), 0, sourceImage.Width - 1);
+                int nY = Clamp((int)(y + (randomNumber - 0.5) * 10), 0, sourceImage.Height - 1);
+
+                return sourceImage.GetPixel(nX, nY);
             }
         }
 
@@ -404,6 +435,25 @@ namespace ЛабРабКомГраф
             public override Bitmap ProcessImage(Bitmap im, BackgroundWorker bw)
             {
                 return erfil.ProcessImage(dilfil.ProcessImage(im, bw), bw);
+            }
+        }
+
+        class Rotate : Filters
+        {
+            protected override Color calcNewPixelColor(Bitmap sourceImage, int x, int y)
+            {
+                int centerX = sourceImage.Width / 2;
+                int centerY = sourceImage.Height / 2;
+                int nX = (int)((x - centerX) * Math.Cos(Math.PI / 6) - (y - centerY) * Math.Sin(Math.PI / 6)) + centerX;
+                int nY = (int)((x - centerX) * Math.Sin(Math.PI / 6) + (y - centerY) * Math.Cos(Math.PI / 6)) + centerY;
+
+                if (nX >= sourceImage.Width || nX < 0 || nY >= sourceImage.Height || nY < 0)
+                {
+                    return Color.White;
+                }
+
+                return sourceImage.GetPixel(nX, nY);
+
             }
         }
 
@@ -617,6 +667,24 @@ namespace ЛабРабКомГраф
         private void motionBlurToolStripMenuItem_Click(object sender, EventArgs e)
         {
             Filters filter = new MotionBlur();
+            backgroundWorker1.RunWorkerAsync(filter);
+        }
+
+        private void поворотToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Filters filter = new Rotate();
+            backgroundWorker1.RunWorkerAsync(filter);
+        }
+
+        private void стеклоToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Filters filter = new Window();
+            backgroundWorker1.RunWorkerAsync(filter);
+        }
+
+        private void выделениеГраницToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Filters filter = new Pruit();
             backgroundWorker1.RunWorkerAsync(filter);
         }
     }
