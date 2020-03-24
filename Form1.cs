@@ -317,6 +317,28 @@ namespace ЛабРабКомГраф
             }
         }
 
+        class Window : Filters
+        {
+
+            private double randomNumber;
+            private Random rand;
+
+            public Window()
+            {
+                rand = new Random();
+            }
+
+            protected override Color calcNewPixelColor(Bitmap sourceImage, int x, int y)
+            {
+
+                randomNumber = rand.NextDouble();
+                int nX = Clamp((int)(x + (randomNumber - 0.5) * 10), 0, sourceImage.Width - 1);
+                int nY = Clamp((int)(y + (randomNumber - 0.5) * 10), 0, sourceImage.Height - 1);
+
+                return sourceImage.GetPixel(nX, nY);
+            }
+        }
+
         class ErosionFilter : Filters
         {
             int width = 3;
@@ -642,6 +664,12 @@ namespace ЛабРабКомГраф
         private void поворотToolStripMenuItem_Click(object sender, EventArgs e)
         {
             Filters filter = new Rotate();
+            backgroundWorker1.RunWorkerAsync(filter);
+        }
+
+        private void стеклоToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Filters filter = new Window();
             backgroundWorker1.RunWorkerAsync(filter);
         }
     }
