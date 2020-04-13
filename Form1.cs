@@ -312,7 +312,7 @@ namespace ЛабРабКомГраф
                 for (int j = -height / 2; j <= height / 2; j++)
                     for (int i = -width / 2; i <= width / 2; i++)
                     {
-                        //обработка краевого случая
+                        //borders
                         int nx = Clamp(x + i, 0, im.Width - 1);
                         int ny = Clamp(y + j, 0, im.Height - 1);
 
@@ -363,7 +363,7 @@ namespace ЛабРабКомГраф
                 for (int j = -height / 2; j <= height / 2; j++)
                     for (int i = -width / 2; i <= width / 2; i++)
                     {
-                        //обработка краевого случая
+                        //borders
                         int nx = Clamp(x + i, 0, im.Width - 1);
                         int ny = Clamp(y + j, 0, im.Height - 1);
 
